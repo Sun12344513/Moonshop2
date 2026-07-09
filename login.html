@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Firebase Auth V3</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#0f172a;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.box{
+    background:#1e293b;
+    padding:20px;
+    border-radius:12px;
+    width:360px;
+    text-align:center;
+}
+
+input{
+    width:90%;
+    padding:10px;
+    margin:6px 0;
+    border-radius:8px;
+    border:none;
+}
+
+button{
+    width:95%;
+    padding:10px;
+    margin-top:8px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    background:#22c55e;
+    color:white;
+}
+
+button:hover{background:#16a34a}
+
+.alt{background:#334155}
+
+.msg{
+    font-size:13px;
+    margin-top:8px;
+    color:#fbbf24;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+    <h2>🔥 Firebase Auth V3</h2>
+
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+    <button class="alt" onclick="verifyEmail()">Send Verify Email</button>
+    <button class="alt" onclick="resetPassword()">Forgot Password</button>
+    <button class="alt" onclick="logout()">Logout</button>
+
+    <p id="msg" class="msg"></p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+
+// 🔥 YOUR FIREBASE CONFIG (THAY CÁI NÀY)
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+function msg(t){
+    document.getElementById("msg").innerText = t;
+}
+
+// 🔐 REGISTER
+window.register = async function(){
+    let email = document.getElementById("email").value;
+    let pass = document.getElementById("password").value;
+
+    try{
+        const user = await createUserWithEmailAndPassword(auth, email, pass);
+        await sendEmailVerification(user.user);
+
+        msg("✅ Registered! Check email verify 📩");
+    }catch(e){
+        msg("❌ " + e.message);
+    }
+}
+
+// 🔑 LOGIN
+window.login = async function(){
+    let email = document.getElementById("email").value;
+    let pass = document.getElementById("password").value;
+
+    try{
+        const user = await signInWithEmailAndPassword(auth, email, pass);
+
+        if(!user.user.emailVerified){
+            msg("⚠️ Email chưa verify!");
+        } else {
+            msg("🎉 Login success!");
+        }
+    }catch(e){
+        msg("❌ " + e.message);
+    }
+}
+
+// 📩 VERIFY EMAIL
+window.verifyEmail = async function(){
+    const user = auth.currentUser;
+
+    if(!user){
+        msg("❌ Chưa login");
+        return;
+    }
+
+    await sendEmailVerification(user);
+    msg("📩 Email verify sent!");
+}
+
+// 🔁 RESET PASSWORD
+window.resetPassword = async function(){
+    let email = document.getElementById("email").value;
+
+    if(!email){
+        msg("❌ Nhập email");
+        return;
+    }
+
+    try{
+        await sendPasswordResetEmail(auth, email);
+        msg("📩 Reset email sent!");
+    }catch(e){
+        msg("❌ " + e.message);
+    }
+}
+
+// 🚪 LOGOUT
+window.logout = async function(){
+    await signOut(auth);
+    msg("👋 Logged out");
+}
+
+// 👀 AUTO STATE
+onAuthStateChanged(auth, (user)=>{
+    if(user){
+        msg("👤 Logged in: " + user.email);
+    }
+});
+</script>
+
+</body>
+</html>
